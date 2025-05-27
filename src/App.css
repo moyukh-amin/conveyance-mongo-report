@@ -1,0 +1,19 @@
+/* src/App.css */
+/* You can add global custom styles here if needed */
+
+/* Example: Ensure layout takes full height */
+.layout {
+  min-height: 100vh;
+}
+
+.site-layout-content {
+  /* Add any specific styling for the content area */
+  /* Example:
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09); 
+  */
+}
+
+/* Responsive table container for horizontal scroll */
+.ant-table-container {
+    overflow-x: auto;
+}

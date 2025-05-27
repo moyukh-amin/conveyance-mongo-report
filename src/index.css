@@ -1,0 +1,38 @@
+/* src/index.css */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Ensure Ant Design Layout components take up available space */
+#root, #root > .ant-layout {
+  min-height: 100vh;
+}
+
+/* Minor adjustments for better visual appeal with AntD components */
+.ant-card-head-title {
+  font-weight: 500; /* Slightly bolder card titles */
+}
+
+.ant-statistic-title {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.55); /* Softer statistic titles */
+}
+
+.ant-statistic-content {
+  font-size: 22px; /* Slightly smaller main statistic content for compactness */
+}
+
+/* Fix for potential horizontal scrollbar on body with full-width tables */
+body.ant-scrolling-effect {
+  width: auto !important;
+}
