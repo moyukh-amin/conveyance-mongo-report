@@ -50,7 +50,7 @@ class BaseHandler(tornado.web.RequestHandler):
         reason = kwargs.get("reason", getattr(self, "_reason", "Unknown error"))
         if "exc_info" in kwargs: # Log actual error for debugging
             print(f"Error: {kwargs['exc_info'][1]}")
-        
+
         self.finish(json.dumps({
             "error": {
                 "code": status_code,
@@ -78,7 +78,7 @@ class BaseHandler(tornado.web.RequestHandler):
             # This is inefficient for many keys. Production systems might use a pre-hashed lookup key
             # or a more optimized strategy if performance is critical.
             all_api_keys = await db.api_keys.find({"is_active": True}).to_list(length=None)
-            
+
             matched_key_info = None
             for key_doc in all_api_keys:
                 if check_password(api_key_header, key_doc["key_hash"]): # Using check_password for bcrypt comparison
@@ -89,7 +89,7 @@ class BaseHandler(tornado.web.RequestHandler):
                         continue # Treat as invalid
                     matched_key_info = key_doc
                     break
-            
+
             if matched_key_info:
                 self._current_identity = {
                     "type": "api",
@@ -115,7 +115,7 @@ class BaseHandler(tornado.web.RequestHandler):
                     "_id": str(user["_id"])
                 }
                 return self._current_identity
-        
+
         self._current_identity = None
         return None
 
@@ -178,7 +178,7 @@ def authenticated_access(required_roles_any: list = None, allow_api=True, allow_
                 user_roles = identity.get("roles", [])
                 if not any(role in user_roles for role in required_roles_any):
                     raise tornado.web.HTTPError(403, reason=f"Access denied. Requires one of roles: {', '.join(required_roles_any)}.")
-            
+
             return await method(self, *args, **kwargs)
         return wrapper
     return decorator
@@ -203,7 +203,7 @@ class LoginHandler(BaseHandler):
         if user and check_password(password, user["hashed_password"]):
             if not user.get("roles") or config.ROLE_WEBAPP_USER not in user["roles"]:
                  raise tornado.web.HTTPError(403, reason="User not authorized for web application access.")
-            
+
             self.set_secure_cookie("user_id", str(user["_id"]), expires_days=1) # Session cookie
             self.write(json.dumps({"message": "Login successful", "username": user["username"], "roles": user.get("roles", [])}))
         else:
@@ -231,7 +231,7 @@ class AvailableFieldsHandler(BaseHandler): # No changes to internal logic, just 
             if not form_setting: raise tornado.web.HTTPError(404, reason=f"Form settings not found for form_id: {form_id}")
             submission_collection_name = form_setting.get("collection_name")
             if not submission_collection_name: raise tornado.web.HTTPError(500, reason="Form setting is missing 'collection_name'")
-            
+
             submission_fields = []
             if "fields" in form_setting and isinstance(form_setting["fields"], list):
                 for field_def in form_setting["fields"]:
@@ -239,7 +239,7 @@ class AvailableFieldsHandler(BaseHandler): # No changes to internal logic, just 
                          submission_fields.append({"name": f"submitted_data.{field_def['name']}", "label": field_def.get("label", field_def['name']), "type": field_def.get("type", "string"), "source": "submission"})
                     elif isinstance(field_def, str):
                         submission_fields.append({"name": f"submitted_data.{field_def}", "label": field_def, "type": "string", "source": "submission"})
-            
+
             associated_fields = []
             associated_collection_name = form_setting.get("associated_with")
             if associated_collection_name:
@@ -255,7 +255,7 @@ class AvailableFieldsHandler(BaseHandler): # No changes to internal logic, just 
                         elif isinstance(value, list): field_type = "array"
                         elif isinstance(value, dict): field_type = "object"
                         associated_fields.append({"name": key, "label": key.replace("_", " ").title(), "type": field_type, "source": associated_collection_name})
-            
+
             standard_fields = [
                 {"name": "activity_date", "label": "Activity Date", "type": "date", "source": "base"},
                 {"name": "so_id", "label": "SO ID", "type": "string", "source": "base"},
@@ -306,7 +306,7 @@ class SODailyActivityBaseHandler(BaseHandler):
             {"$lookup": {"from": "sub_orgs", "localField": "tsm_sub_org_details.parent_org_id", "foreignField": "_id", "as": "rm_sub_org_details"}}, {"$unwind": {"path": "$rm_sub_org_details", "preserveNullAndEmptyArrays": True}},
             {"$lookup": {"from": "users", "localField": "rm_sub_org_details.user_id", "foreignField": "_id", "as": "rm_user_details"}}, {"$unwind": {"path": "$rm_user_details", "preserveNullAndEmptyArrays": True}},
         ])
-        
+
     def _get_dynamic_projection_stage(self, requested_fields, form_settings, use_hierarchy_for_names=False): # ... (original)
         project_stage = {
             "_id": 1, "activity_date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
@@ -352,7 +352,7 @@ class SODailyActivityBaseHandler(BaseHandler):
             for field, value in column_filters.items():
                 filter_match[field] = {"$regex": f"^{value}", "$options": "i"} if isinstance(value, str) else value
             if filter_match: pipeline.append({"$match": filter_match})
-            
+
     def _add_sorting_stage(self, pipeline, sort_by, sort_order): # ... (original)
         if sort_by: pipeline.append({"$sort": {sort_by: sort_order}})
 
@@ -375,19 +375,19 @@ class SODailyActivityDetailsHandler(SODailyActivityBaseHandler):
             self._add_user_details_stage(pipeline, local_field="created_by", as_field="so_user_details")
             self._add_associated_collection_stage(pipeline, form_settings, local_assoc_field="associated_with")
             self._add_hierarchy_stages(pipeline, use_hierarchy=use_hierarchy, so_creator_id_field="so_user_details._id") # Corrected field
-            
+
             final_project_stage_def = self._get_dynamic_projection_stage(requested_fields, form_settings, use_hierarchy_for_names=use_hierarchy)
             pipeline.append(final_project_stage_def)
-            
+
             searchable_fields = ["so_name", "product_type"] # Default
             if requested_fields and "*" not in requested_fields: searchable_fields.extend([f.split('.')[-1] for f in requested_fields if f.split('.')[-1] not in searchable_fields])
             elif "*" in requested_fields: searchable_fields.extend([k for k in final_project_stage_def["$project"].keys() if k not in searchable_fields and k != "_id"])
             self._add_search_filter_stages(pipeline, query_string, searchable_fields, column_filters)
-            
+
             count_pipeline = pipeline + [{"$count": "total_items"}]
             self._add_sorting_stage(pipeline, sort_by, sort_order)
             self._add_pagination_stages(pipeline, page, page_size)
-            
+
             results = await db[submission_collection_name].aggregate(pipeline).to_list(length=page_size)
             total_items_res = await db[submission_collection_name].aggregate(count_pipeline).to_list(length=1)
             total_items = total_items_res[0]["total_items"] if total_items_res else 0
@@ -438,7 +438,7 @@ class SODailyActivityTSMSummaryHandler(SODailyActivityBaseHandler):
                     rf_out_name = rf_path.replace(".", "_")
                     if f"total_{rf_out_name}" in group_stage: final_summary_project[f"total_{rf_out_name}"] = 1
             pipeline.append({"$project": final_summary_project})
-            
+
             self._add_search_filter_stages(pipeline, query_string, ["tsm_name", "activity_date"], column_filters)
             count_pipeline = pipeline + [{"$count": "total_items"}]
             self._add_sorting_stage(pipeline, sort_by, sort_order)
@@ -479,7 +479,7 @@ class SODailyActivityOverallSummaryHandler(SODailyActivityBaseHandler):
                     rf_out_name = rf_path.replace(".", "_")
                     if rf_out_name in pre_group_project: group_stage[f"overall_total_{rf_out_name}"] = {"$sum": f"${rf_out_name}"}
             pipeline.append({"$group": group_stage})
-            
+
             final_overall_project = {"_id": 0, "activity_date": "$_id.activity_date", "overall_total_quantity": 1, "overall_total_amount": 1}
             if requested_fields:
                 for rf_path in requested_fields:
@@ -500,12 +500,12 @@ class BaseExportHandler(SODailyActivityBaseHandler): # Inherits auth and basic f
         product_type = self.get_argument("product_type", None)
         requested_fields_str = self.get_argument("fields", None) # Comma-separated string
         requested_fields = [rf.strip() for rf in requested_fields_str.split(',')] if requested_fields_str else []
-        
+
         sort_by, sort_order = self.get_sort_params()
         query_string = self.get_argument("q", None)
         column_filters = self.get_filter_params()
         use_hierarchy = self.get_argument("use_hierarchy", "false").lower() == "true"
-        
+
         # Default to true for TSM summary if not specified, aligning with TSMSummaryHandler
         if report_type == 'tsm_summary' and 'use_hierarchy' not in self.request.arguments:
             use_hierarchy = True
@@ -528,7 +528,7 @@ class BaseExportHandler(SODailyActivityBaseHandler): # Inherits auth and basic f
         if report_type == 'details':
             final_project_stage_def = self._get_dynamic_projection_stage(requested_fields, form_settings, use_hierarchy_for_names=use_hierarchy)
             pipeline.append(final_project_stage_def)
-            
+
             searchable_fields = ["so_name", "product_type"]
             if requested_fields and "*" not in requested_fields: searchable_fields.extend([f.split('.')[-1] for f in requested_fields if f.split('.')[-1] not in searchable_fields])
             elif "*" in requested_fields and final_project_stage_def: searchable_fields.extend([k for k in final_project_stage_def["$project"].keys() if k not in searchable_fields and k != "_id"])
@@ -540,7 +540,7 @@ class BaseExportHandler(SODailyActivityBaseHandler): # Inherits auth and basic f
                                  "amount": {"$ifNull": [{"$convert": {"input": "$submitted_data.amount", "to": "double", "onError": 0.0, "onNull": 0.0}}, 0.0]}}
             if use_hierarchy: pre_group_project["tsm_name"] = {"$ifNull": [{"$concat": ["$tsm_user_details.first_name", " ", "$tsm_user_details.last_name"]}, "N/A_Hierarchy"]}
             else: pre_group_project["tsm_name"] = {"$ifNull": ["$so_user_details.manager_name", "N/A_DirectManager"]}
-            
+
             # Handle requested_fields for summation (numeric fields)
             summable_fields_in_projection = {}
             if requested_fields: # These are original field paths from 'available_fields'
@@ -557,28 +557,28 @@ class BaseExportHandler(SODailyActivityBaseHandler): # Inherits auth and basic f
 
             pipeline.append({"$project": pre_group_project})
 
-            group_stage = {"_id": {"tsm_name": "$tsm_name", "activity_date": "$activity_date"}, 
-                           "total_quantity": {"$sum": "$quantity"}, "total_amount": {"$sum": "$amount"}, 
+            group_stage = {"_id": {"tsm_name": "$tsm_name", "activity_date": "$activity_date"},
+                           "total_quantity": {"$sum": "$quantity"}, "total_amount": {"$sum": "$amount"},
                            "number_of_sos": {"$addToSet": "$so_id"}}
             for proj_field, total_field_name in summable_fields_in_projection.items():
                  if proj_field not in ["quantity", "amount"]: # quantity and amount are already standard
                     group_stage[total_field_name] = {"$sum": f"${proj_field}"}
             pipeline.append({"$group": group_stage})
 
-            final_project_stage_def = {"_id": 0, "tsm_name": "$_id.tsm_name", "activity_date": "$_id.activity_date", 
+            final_project_stage_def = {"_id": 0, "tsm_name": "$_id.tsm_name", "activity_date": "$_id.activity_date",
                                        "total_quantity": 1, "total_amount": 1, "number_of_sos": {"$size": "$number_of_sos"}}
             for total_field_name in summable_fields_in_projection.values():
                 if total_field_name not in ["total_quantity", "total_amount"]:
                     final_project_stage_def[total_field_name] = 1
             pipeline.append({"$project": final_project_stage_def})
             self._add_search_filter_stages(pipeline, query_string, ["tsm_name", "activity_date"], column_filters)
-        
+
         else:
             raise tornado.web.HTTPError(500, reason="Invalid report_type for export.")
 
         # Sorting (applied before fetching all data, no pagination for export)
         self._add_sorting_stage(pipeline, sort_by, sort_order)
-        
+
         # Fetch all matching data
         results = await db[submission_collection_name].aggregate(pipeline).to_list(length=None) # Length None to get all
         return results, final_project_stage_def.get("$project", {}) if final_project_stage_def else {}
@@ -587,7 +587,7 @@ class BaseExportHandler(SODailyActivityBaseHandler): # Inherits auth and basic f
     def _write_csv(self, data, headers_map, filename_prefix):
         self.set_header('Content-Type', 'text/csv')
         self.set_header('Content-Disposition', f'attachment; filename="{filename_prefix}_{datetime.now().strftime("%Y%m%d")}.csv"')
-        
+
         string_io = io.StringIO()
         # Use headers_map to define CSV headers in desired order and naming
         # If headers_map is empty (e.g. for TSM summary where keys are already good), derive from first data row
@@ -596,10 +596,10 @@ class BaseExportHandler(SODailyActivityBaseHandler): # Inherits auth and basic f
             return
 
         fieldnames = list(headers_map.keys()) if headers_map else list(data[0].keys())
-        
+
         writer = csv.DictWriter(string_io, fieldnames=fieldnames, extrasaction='ignore')
         writer.writeheader() # Writes translated headers if headers_map is used, else original keys
-        
+
         for row_dict in data:
             # If headers_map is provided, transform keys before writing
             if headers_map:
@@ -607,13 +607,13 @@ class BaseExportHandler(SODailyActivityBaseHandler): # Inherits auth and basic f
                 writer.writerow(transformed_row)
             else:
                 writer.writerow(row_dict) # Write original dict if no specific header mapping
-                
+
         self.write(string_io.getvalue())
 
     def _write_excel(self, data, headers_map, filename_prefix):
         self.set_header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         self.set_header('Content-Disposition', f'attachment; filename="{filename_prefix}_{datetime.now().strftime("%Y%m%d")}.xlsx"')
-        
+
         excel_io = io.BytesIO()
         workbook = xlsxwriter.Workbook(excel_io, {'in_memory': True})
         worksheet = workbook.add_worksheet("Report")
@@ -646,7 +646,7 @@ class BaseExportHandler(SODailyActivityBaseHandler): # Inherits auth and basic f
                     worksheet.write_boolean(row_num, col_num, cell_value)
                 else: # String or other
                     worksheet.write_string(row_num, col_num, str(cell_value) if cell_value is not None else '')
-        
+
         # Auto-adjust column widths (optional, can be slow for very wide tables)
         # for i, header in enumerate(headers):
         #    max_len = max(len(str(header)), *[len(str(row.get(original_keys[i], ''))) for row in data])
@@ -664,7 +664,7 @@ class SODetailExportHandler(BaseExportHandler):
             raise tornado.web.HTTPError(400, reason="Invalid or missing 'format' parameter. Must be 'csv' or 'xlsx'.")
 
         data, projection_map = await self.generate_export_data(report_type='details')
-        
+
         # For details export, the headers_map should come from the 'projection_map' ($project stage)
         # to match the structure of the data being exported and use user-friendly names.
         # The keys of projection_map are the output field names.
@@ -677,7 +677,7 @@ class SODetailExportHandler(BaseExportHandler):
         # This assumes projection_map keys are the desired header names.
         # If a field like 'so_user_details.first_name' was projected as 'so_first_name',
         # projection_map would have {'so_first_name': '$so_user_details.first_name'}. We want 'so_first_name' as header.
-        
+
         headers_for_export = {key: key for key in projection_map.keys() if key != "_id"} # Exclude MongoDB _id
         # If no specific fields were requested, and projection_map is complex,
         # one might need to derive headers from availableFields matching selected_fields.
@@ -698,7 +698,7 @@ class TSMSummaryExportHandler(BaseExportHandler):
             raise tornado.web.HTTPError(400, reason="Invalid or missing 'format' parameter. Must be 'csv' or 'xlsx'.")
 
         data, projection_map = await self.generate_export_data(report_type='tsm_summary')
-        
+
         # For TSM summary, the projection_map keys from the final $project are already user-friendly
         # e.g., "tsm_name", "total_quantity".
         headers_for_export = {key: key for key in projection_map.keys() if key != "_id"}
@@ -712,8 +712,8 @@ class TSMSummaryExportHandler(BaseExportHandler):
 def make_app():
     app_settings = {
         "cookie_secret": config.COOKIE_SECRET,
-        "login_url": "/api/v1/auth/login", 
-        "debug": True 
+        "login_url": "/api/v1/auth/login",
+        "debug": True
     }
     return tornado.web.Application([
         (r"/api/v1/auth/login", LoginHandler),
@@ -747,7 +747,7 @@ if __name__ == "__main__":
     #             "roles": [config.ROLE_WEBAPP_USER, config.ROLE_ADMIN], "created_at": datetime.now(timezone.utc)
     #         })
     #         print("Created testuser with password 'testpassword123'")
-        
+
     #     # Create test API key if no keys exist
     #     if await db.api_keys.count_documents({}) == 0:
     #         raw_key, hashed_api_key = generate_api_key()
@@ -760,5 +760,5 @@ if __name__ == "__main__":
     #         print("Store this key securely. It will not be shown again.")
 
     # tornado.ioloop.IOLoop.current().add_callback(create_initial_data) # Add data creation to IOLoop
-    
+
     tornado.ioloop.IOLoop.current().start()

@@ -10,7 +10,7 @@ const { Text } = Typography;
 
 const FieldSelector = ({ availableFields, selectedFields, onChange, loading }) => {
   const groupedFields = availableFields.reduce((acc, field) => {
-    const groupName = field.source === 'submission' ? `SO Form (${field.source})` 
+    const groupName = field.source === 'submission' ? `SO Form (${field.source})`
                     : field.source === 'base' ? 'Standard Fields'
                     : field.source === 'hierarchy' ? 'Hierarchy Fields'
                     : `Associated: ${field.source}`;
@@ -48,7 +48,7 @@ const FieldSelector = ({ availableFields, selectedFields, onChange, loading }) =
               <Option key={field.name} value={field.name} label={field.label}>
                 <Space>
                   <span>{field.label} ({field.name})</span>
-                  {field.doc_path && 
+                  {field.doc_path &&
                     <a href={`${DOCS_BASE_URL}/${field.doc_path}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
                       <QuestionCircleOutlined style={{fontSize: '0.8em', color: 'rgba(0,0,0,0.4)'}}/>
                     </a>

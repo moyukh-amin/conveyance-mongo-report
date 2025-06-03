@@ -65,7 +65,7 @@ export const ReportProvider = ({ children }) => {
             commonApiParams[`column_filter_${key}`] = value;
         }
     });
-    
+
     if (sortParams.field && sortParams.order) {
         commonApiParams.sort_by = sortParams.field;
         commonApiParams.sort_order = sortParams.order === 'ascend' ? 'asc' : 'desc';

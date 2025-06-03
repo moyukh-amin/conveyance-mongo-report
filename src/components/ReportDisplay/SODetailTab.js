@@ -83,7 +83,7 @@ const SODetailTab = () => {
     setCurrentTableParams({ pagination: newPagination, sortParams, columnFilters, globalSearchText });
     applyFiltersAndFetchData(newPagination, sortParams, columnFilters, 'soDetail');
   };
-  
+
   const handleGlobalSearch = (searchText) => {
     const newPagination = { current: 1, pageSize: currentTableParams.pagination?.pageSize || 10, globalSearch: searchText };
     setCurrentTableParams(prev => ({ ...prev, pagination: newPagination, globalSearchText: searchText }));

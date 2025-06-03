@@ -64,21 +64,21 @@ const OverallSummaryTab = () => {
     legend: { position: 'top-right' },
     tooltip: { shared: true, showCrosshairs: true },
   };
-  
+
   const renderCustomStats = () => {
     if (!summaryData) return null;
 
     const customStats = [];
     for (const key in summaryData) {
-        if (key.startsWith('overall_total_') && 
-            key !== 'overall_total_quantity' && 
+        if (key.startsWith('overall_total_') &&
+            key !== 'overall_total_quantity' &&
             key !== 'overall_total_amount') {
-            
+
             // Try to find original field label
             const originalFieldName = key.replace('overall_total_', '');
             let baseLabel = originalFieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()); // Default prettified
             let docPath = `overall_summary/metrics/${originalFieldName}`; // Default doc path
-            
+
             const fieldInAvailable = availableFields.find(af => {
                 // Backend might name it `overall_total_submitted_data_custom_field`
                 // or `overall_total_associated_data_docs_metric`
@@ -88,7 +88,7 @@ const OverallSummaryTab = () => {
             if(fieldInAvailable) {
                 baseLabel = `Overall Total ${fieldInAvailable.label}`;
                 // Potentially use a specific docPath from fieldInAvailable if it was defined there
-                // docPath = fieldInAvailable.doc_path || `overall_summary/metrics/${originalFieldName}`; 
+                // docPath = fieldInAvailable.doc_path || `overall_summary/metrics/${originalFieldName}`;
             }
 
             const statTitle = (

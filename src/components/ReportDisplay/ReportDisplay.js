@@ -28,20 +28,20 @@ const ReportDisplay = () => {
   return (
     <Card>
       <Tabs activeKey={activeTab} onChange={handleTabChange} type="card">
-        <TabPane 
-            tab={<span><SolutionOutlined /> SO Detail</span>} 
+        <TabPane
+            tab={<span><SolutionOutlined /> SO Detail</span>}
             key="soDetail"
         >
           {activeTab === 'soDetail' && <SODetailTab />}
         </TabPane>
-        <TabPane 
-            tab={<span><BarChartOutlined /> TSM Summary</span>} 
+        <TabPane
+            tab={<span><BarChartOutlined /> TSM Summary</span>}
             key="tsmSummary"
         >
           {activeTab === 'tsmSummary' && <TSMSummaryTab />}
         </TabPane>
-        <TabPane 
-            tab={<span><PieChartOutlined /> Overall Daily Summary</span>} 
+        <TabPane
+            tab={<span><PieChartOutlined /> Overall Daily Summary</span>}
             key="overallSummary"
         >
           {activeTab === 'overallSummary' && <OverallSummaryTab />}

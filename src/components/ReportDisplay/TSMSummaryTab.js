@@ -25,7 +25,7 @@ const TSMSummaryTab = () => {
     columnFilters: {},
     globalSearchText: '',
   });
-  
+
   useEffect(() => {
     setCurrentTableParams(prev => ({...prev, pagination: tsmSummary.pagination}));
   }, [tsmSummary.pagination]);
@@ -48,8 +48,8 @@ const TSMSummaryTab = () => {
     if (tsmSummary.data.length > 0) {
         return Object.keys(tsmSummary.data[0])
             .filter(key => key.startsWith('total_') || key.startsWith('overall_total_'))
-            .map(key => ({ 
-                name: key, 
+            .map(key => ({
+                name: key,
                 label: key.replace(/total_|overall_total_/g, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) // Prettify
             }));
     }
@@ -104,7 +104,7 @@ const TSMSummaryTab = () => {
             }
         });
     }
-    
+
     // Ensure quantity and amount are included if not already dynamically added with a specific name
     // And add docPath for them
     const hasTotalQuantity = tsmSummary.data.length > 0 && 'total_quantity' in tsmSummary.data[0];
@@ -131,7 +131,7 @@ const TSMSummaryTab = () => {
     setCurrentTableParams(prev => ({ ...prev, pagination: newPagination, globalSearchText: searchText }));
     applyFiltersAndFetchData(newPagination, currentTableParams.sortParams, currentTableParams.columnFilters, 'tsmSummary');
   };
-  
+
   const handleColumnFilter = (updatedColumnFilters) => {
     const newPagination = { current: 1, pageSize: currentTableParams.pagination?.pageSize || 10, globalSearch: currentTableParams.globalSearchText };
     setCurrentTableParams(prev => ({ ...prev, pagination: newPagination, columnFilters: updatedColumnFilters }));
@@ -147,7 +147,7 @@ const TSMSummaryTab = () => {
     });
     // If no specific numeric fields are selected, backend defaults to quantity,amount.
     // We can pass empty or the specific ones if selected.
-    
+
     const exportParams = {
       date: filters.date,
       product_type: filters.product_type,
@@ -177,7 +177,7 @@ const TSMSummaryTab = () => {
     if (!tsmSummary.data || tsmSummary.data.length === 0) return [];
     // Let's assume we want to chart 'total_amount' or the first available 'total_custom_field'
     const valueField = numericFieldsForSummary.find(f => f.name === 'total_amount')?.name || numericFieldsForSummary[0]?.name || 'total_quantity';
-    
+
     return tsmSummary.data.map(item => ({
       category: item.tsm_name,
       value: item[valueField] || 0,

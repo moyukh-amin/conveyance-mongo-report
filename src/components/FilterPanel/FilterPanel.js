@@ -34,7 +34,7 @@ const FilterPanel = () => {
     const initialColumnFilters = {};
     applyFiltersAndFetchData(initialPagination, initialSort, initialColumnFilters, activeTab);
   };
-  
+
   const onDateChange = (date, dateString) => {
     handleFilterChange({ date: dateString });
   };
@@ -50,7 +50,7 @@ const FilterPanel = () => {
   const onUseHierarchyChange = (checked) => {
     handleFilterChange({ use_hierarchy: checked });
   };
-  
+
   // Form ID change handler (if you want to make it dynamic, e.g., via an input/select)
   // const onFormIdChange = (value) => {
   //   handleFilterChange({ form_id: value, selected_fields: [] }); // Reset selected fields when form_id changes
@@ -108,14 +108,14 @@ const FilterPanel = () => {
             />
           </Col>
         </Row>
-        
+
         {/* Optional: Form ID selector if you plan to support multiple forms */}
         {/* <Row gutter={[16,16]}>
             <Col xs={24} sm={12} md={8} lg={6}>
-                <Input 
+                <Input
                     addonBefore="Form ID:"
-                    value={filters.form_id} 
-                    onChange={(e) => handleFilterChange({ form_id: e.target.value })} 
+                    value={filters.form_id}
+                    onChange={(e) => handleFilterChange({ form_id: e.target.value })}
                     onBlur={(e) => {
                         fetchAvailableFields(e.target.value);
                         handleFilterChange({ selected_fields: [] }); // Reset fields

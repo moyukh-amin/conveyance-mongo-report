@@ -28,7 +28,7 @@ def generate_api_key(length=32) -> tuple[str, str]:
 
 if __name__ == '__main__':
     # Example usage:
-    
+
     # User password management
     # new_password = "supersecretuserpassword"
     # hashed = hash_password(new_password)
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     # client_api_key, stored_api_key_hash = generate_api_key()
     # print(f"\nGenerated API Key (give to client): {client_api_key}")
     # print(f"Stored API Key Hash (save in DB): {stored_api_key_hash}")
-    
+
     # # Simulating API key check (backend would do this)
     # # Client sends: client_api_key
     # # Backend has: stored_api_key_hash

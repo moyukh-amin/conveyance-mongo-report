@@ -38,7 +38,7 @@ const DynamicTable = ({
     // Trigger data fetch with new search text, reset pagination
     onSearch(value);
   };
-  
+
   const handleResetGlobalSearch = () => {
     setGlobalSearchText('');
     onSearch(''); // Fetch data with empty search
@@ -139,7 +139,7 @@ const DynamicTable = ({
         // We don't need onFilter for server-side filtering, but if we did client-side:
         // column.onFilter = (value, record) =>
         //   record[col.dataIndex] ? record[col.dataIndex].toString().toLowerCase().includes(value.toLowerCase()) : '';
-        
+
         // Set filtered value for UI indication
         if (columnFilters[col.dataIndex]) {
             column.filteredValue = [columnFilters[col.dataIndex]];
